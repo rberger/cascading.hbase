@@ -22,12 +22,13 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.util.Util;
+
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
+import org.apache.hadoop.hbase.mapred.TableInputFormat;
+import org.apache.hadoop.hbase.mapred.TableOutputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
@@ -175,7 +176,7 @@ public class HBaseScheme extends Scheme
       for( Object fieldName : valueFields[ i ] )
         {
         byte[] bytes = row.getValue( Bytes.toBytes( familyName ), Bytes.toBytes( (String) fieldName ) );
-        result.add(  bytes != null ? Bytes.toString( bytes ) : null  );
+        result.add( Bytes.toString( bytes )  );
         }
       }
 
@@ -189,7 +190,7 @@ public class HBaseScheme extends Scheme
     byte[] keyBytes = Bytes.toBytes( key.getString( 0 ) );
     Put put = new Put( keyBytes );
 
-    for( int i = 0; i < valueFields.length; i++ )
+    for( int i = 0; i < familyNames.length; i++ )
       {
       Fields fieldSelector = valueFields[ i ];
       TupleEntry values = tupleEntry.selectEntry( fieldSelector );
@@ -201,9 +202,11 @@ public class HBaseScheme extends Scheme
 
         String value = tuple.getString( j );
 
-        byte[] asBytes = value == null ? null : Bytes.toBytes( value );
+        byte[] family = Bytes.toBytes( familyNames[ i ] );
+        byte[] qualifier = Bytes.toBytes( (String) fields.get( j ) );
+        byte[] asBytes = value == null ? HConstants.EMPTY_BYTE_ARRAY : Bytes.toBytes( value );
 
-        put.add( Bytes.toBytes( familyNames[ i ] ), Bytes.toBytes( (String) fields.get( j ) ), asBytes );
+        put.add( family, qualifier, asBytes );
         }
       }
 
@@ -225,18 +228,7 @@ public class HBaseScheme extends Scheme
     String columns = getColumns();
     LOG.debug( "sourcing from columns: {}", columns );
 
-    Scan scan = new Scan();
-
-    for( int i = 0; i < familyNames.length; i++ )
-      {
-      String familyName = familyNames[ i ];
-
-      for( Object fieldName : valueFields[ i ] )
-        scan.addColumn( Bytes.toBytes( familyName ), Bytes.toBytes( (String) fieldName ) );
-      }
-
-    conf.set( TableInputFormat.SCAN, Util.serializeBase64( scan ) );
-//    conf.set( TableInputFormat.INPUT_TABLE, columns );
+      conf.set( TableInputFormat.COLUMN_LIST, columns );
     }
 
   private String getColumns()

@@ -24,8 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
+import org.apache.hadoop.hbase.mapred.TableOutputFormat;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
@@ -129,7 +128,7 @@ public class HBaseTap extends Tap
     return new TapCollector( this, conf );
     }
 
-  private HBaseAdmin getHBaseAdmin( JobConf conf ) throws MasterNotRunningException
+  private HBaseAdmin getHBaseAdmin( JobConf conf ) throws IOException
     {
     if( hBaseAdmin == null )
       {
@@ -137,7 +136,7 @@ public class HBaseTap extends Tap
 
       conf.set( "hbase.zookeeper.quorum", quorumNames );
 
-      hBaseAdmin = new HBaseAdmin( new HBaseConfiguration( conf ) );
+      hBaseAdmin = new HBaseAdmin( HBaseConfiguration.create( conf ) );
       }
 
     return hBaseAdmin;
@@ -156,8 +155,11 @@ public class HBaseTap extends Tap
 
     String[] familyNames = ( (HBaseScheme) getScheme() ).getFamilyNames();
 
-    for( String familyName : familyNames )
+    for( String familyName : familyNames ) {
+      if (familyName.endsWith(":")) 
+        familyName = familyName.substring(0, familyName.length()-1);
       tableDescriptor.addFamily( new HColumnDescriptor( familyName ) );
+    }
 
     hBaseAdmin.createTable( tableDescriptor );
 
