@@ -79,9 +79,9 @@
     </fileset>
 
 
-    <!--<fileset dir="${lib.dir}">-->
-    <!--<include name="*.jar"/>-->
-    <!--</fileset>-->
+    <fileset dir="${lib.dir}">
+    <include name="*.jar"/>
+    </fileset>
 
     <fileset dir="${hadoop.home}">
       <include name="*.jar"/>
@@ -129,7 +129,7 @@
     <mkdir dir="${build.test}"/>
     <mkdir dir="${lib.dir}"/>
 
-    <javac srcdir="${src.dir}" destdir="${build.classes}" verbose="off" debug="${javac.debug}">
+    <javac srcdir="${src.dir}" destdir="${build.classes}" verbose="off" debug="${javac.debug}" includeantruntime="false">
       <classpath refid="project.class.path"/>
     </javac>
 
@@ -139,7 +139,7 @@
       </fileset>
     </copy>
 
-    <javac srcdir="${src.test}" destdir="${build.test}" verbose="off" debug="${javac.debug}">
+    <javac srcdir="${src.test}" destdir="${build.test}" verbose="off" debug="${javac.debug}" includeantruntime="false">
       <classpath refid="project.class.path"/>
     </javac>
 
